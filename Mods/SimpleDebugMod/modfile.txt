@@ -1,0 +1,5 @@
+name=SimpleDebugMod
+description=A simple debug mod that prints a message when a new run starts and increases Zagreus' max health by 50
+author=blackjackalgamingfb
+version=1.0.0
+lua=SimpleDebugMod.lua
