@@ -150,6 +150,7 @@ function Menu.BuildTradeRow(screen, trade, y)
     local buyBtn = CreateScreenComponent({ Name = "ButtonInput", Group = "Combat_Menu", X = 960, Y = y + 40 })
     buyBtn.OnPressedFunctionName = "WretchedBrokerQOL.Menu.ExecuteTrade"
     buyBtn.tradeData = trade
+    Attach({ Id = buyBtn.Id, DestinationId = row.Id })
 
     return row
 end
