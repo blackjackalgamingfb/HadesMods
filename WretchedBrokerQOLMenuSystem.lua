@@ -19,6 +19,10 @@ function Menu.CreateMenu(id, definition)
     FreezePlayerUnit()
     EnableShopGamepadCursor()
 
+    -- Store screen reference for button callbacks
+    CurrentRun = CurrentRun or {}
+    CurrentRun.CurrentScreen = screen
+
     -- Background panel (same as Broker UI)
     screen.Components.Background = CreateScreenComponent({ Name = "ShopBackground", Group = "Combat_Menu" })
 
@@ -150,6 +154,7 @@ function Menu.BuildTradeRow(screen, trade, y)
     local buyBtn = CreateScreenComponent({ Name = "ButtonInput", Group = "Combat_Menu", X = 960, Y = y + 40 })
     buyBtn.OnPressedFunctionName = "WretchedBrokerQOL.Menu.ExecuteTrade"
     buyBtn.tradeData = trade
+    Attach({ Id = buyBtn.Id, DestinationId = row.Id })
 
     return row
 end
@@ -158,6 +163,7 @@ end
 -- Show Page
 ---------------------------------------------------------
 function Menu.ShowPage(screen, index)
+    -- Hide all pages
     for _, page in pairs(screen.Pages) do
         for _, comp in pairs(page) do
             if comp and comp.Id then
@@ -166,13 +172,15 @@ function Menu.ShowPage(screen, index)
         end
     end
 
-    for _, comp in pairs(screen.Pages[index]) do
-        if comp and comp.Id then
-            SetAlpha({ Id = comp.Id, Fraction = 1, Duration = 0.2 })
+    -- Show the requested page if it exists
+    if screen.Pages[index] then
+        for _, comp in pairs(screen.Pages[index]) do
+            if comp and comp.Id then
+                SetAlpha({ Id = comp.Id, Fraction = 1, Duration = 0.2 })
+            end
         end
+        screen.CurrentPage = index
     end
-
-    screen.CurrentPage = index
 end
 
 ---------------------------------------------------------
@@ -202,12 +210,19 @@ function Menu.ExecuteTrade(button)
     local trade = button.tradeData
     if not trade then return end
 
-    if CurrentRun.CurrentRoom.Resources[trade.CostItem] < trade.CostAmount then
+    -- Safety check for CurrentRun and CurrentRoom
+    if not CurrentRun or not CurrentRun.CurrentRoom or not CurrentRun.CurrentRoom.Resources then
+        ModUtil.Hades.PrintConsole("Error: Cannot access game resources")
+        return
+    end
+
+    local currentAmount = CurrentRun.CurrentRoom.Resources[trade.CostItem] or 0
+    if currentAmount < trade.CostAmount then
         ModUtil.Hades.PrintConsole("Not enough " .. trade.CostItem)
         return
     end
 
-    CurrentRun.CurrentRoom.Resources[trade.CostItem] = CurrentRun.CurrentRoom.Resources[trade.CostItem] - trade.CostAmount
+    CurrentRun.CurrentRoom.Resources[trade.CostItem] = currentAmount - trade.CostAmount
     CurrentRun.CurrentRoom.Resources[trade.RewardItem] = (CurrentRun.CurrentRoom.Resources[trade.RewardItem] or 0) + trade.RewardAmount
 
     local c, r = Trades.FormatTradeForDisplay(trade)
@@ -217,8 +232,11 @@ end
 ---------------------------------------------------------
 -- Close Menu (safe cleanup)
 ---------------------------------------------------------
-function Menu.CloseMenu()
+function Menu.CloseMenu(button)
+    local screen = button.Screen or CurrentRun.CurrentScreen
+    if not screen then return end
     DisableShopGamepadCursor()
+    UnfreezePlayerUnit()
 
     local comps = GetAllComponents() or {}
     for _, comp in pairs(comps) do
@@ -227,13 +245,6 @@ function Menu.CloseMenu()
         end
     end
 
-    CloseScreen(comps, ScreenCloseFlags.Im
-
-## Menu System Implementation
-A full custom menu system (WretchedBrokerQOL_MenuSystem) has been implemented, including:
-- Controller support (EnableShopGamepadCursor)
-- Bulk Trades Page (auto-generated)
-- ReSell Trades Page (auto-generated)
-- Resource icons
-- Safe cleanup and screen lifecycle management
-Refer to the MenuSystem file for full code.
+    OnScreenClosed({ Flag = screen.Name })
+    CloseScreen(comps, ScreenCloseFlags.Immediate)
+end
