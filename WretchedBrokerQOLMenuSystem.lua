@@ -158,6 +158,7 @@ end
 -- Show Page
 ---------------------------------------------------------
 function Menu.ShowPage(screen, index)
+    -- Hide all pages
     for _, page in pairs(screen.Pages) do
         for _, comp in pairs(page) do
             if comp and comp.Id then
@@ -166,13 +167,15 @@ function Menu.ShowPage(screen, index)
         end
     end
 
-    for _, comp in pairs(screen.Pages[index]) do
-        if comp and comp.Id then
-            SetAlpha({ Id = comp.Id, Fraction = 1, Duration = 0.2 })
+    -- Show the requested page if it exists
+    if screen.Pages[index] then
+        for _, comp in pairs(screen.Pages[index]) do
+            if comp and comp.Id then
+                SetAlpha({ Id = comp.Id, Fraction = 1, Duration = 0.2 })
+            end
         end
+        screen.CurrentPage = index
     end
-
-    screen.CurrentPage = index
 end
 
 ---------------------------------------------------------
@@ -201,6 +204,12 @@ end
 function Menu.ExecuteTrade(button)
     local trade = button.tradeData
     if not trade then return end
+
+    -- Safety check for CurrentRun and CurrentRoom
+    if not CurrentRun or not CurrentRun.CurrentRoom or not CurrentRun.CurrentRoom.Resources then
+        ModUtil.Hades.PrintConsole("Error: Cannot access game resources")
+        return
+    end
 
     local currentAmount = CurrentRun.CurrentRoom.Resources[trade.CostItem] or 0
     if currentAmount < trade.CostAmount then
