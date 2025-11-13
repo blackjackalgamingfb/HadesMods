@@ -202,12 +202,13 @@ function Menu.ExecuteTrade(button)
     local trade = button.tradeData
     if not trade then return end
 
-    if CurrentRun.CurrentRoom.Resources[trade.CostItem] < trade.CostAmount then
+    local currentAmount = CurrentRun.CurrentRoom.Resources[trade.CostItem] or 0
+    if currentAmount < trade.CostAmount then
         ModUtil.Hades.PrintConsole("Not enough " .. trade.CostItem)
         return
     end
 
-    CurrentRun.CurrentRoom.Resources[trade.CostItem] = CurrentRun.CurrentRoom.Resources[trade.CostItem] - trade.CostAmount
+    CurrentRun.CurrentRoom.Resources[trade.CostItem] = currentAmount - trade.CostAmount
     CurrentRun.CurrentRoom.Resources[trade.RewardItem] = (CurrentRun.CurrentRoom.Resources[trade.RewardItem] or 0) + trade.RewardAmount
 
     local c, r = Trades.FormatTradeForDisplay(trade)
@@ -217,8 +218,11 @@ end
 ---------------------------------------------------------
 -- Close Menu (safe cleanup)
 ---------------------------------------------------------
-function Menu.CloseMenu()
+function Menu.CloseMenu(button)
+    local screen = button.Screen or CurrentRun.CurrentScreen
+    
     DisableShopGamepadCursor()
+    UnfreezePlayerUnit()
 
     local comps = GetAllComponents() or {}
     for _, comp in pairs(comps) do
@@ -227,13 +231,6 @@ function Menu.CloseMenu()
         end
     end
 
-    CloseScreen(comps, ScreenCloseFlags.Im
-
-## Menu System Implementation
-A full custom menu system (WretchedBrokerQOL_MenuSystem) has been implemented, including:
-- Controller support (EnableShopGamepadCursor)
-- Bulk Trades Page (auto-generated)
-- ReSell Trades Page (auto-generated)
-- Resource icons
-- Safe cleanup and screen lifecycle management
-Refer to the MenuSystem file for full code.
+    OnScreenClosed({ Flag = screen.Name })
+    CloseScreen(comps, ScreenCloseFlags.Immediate)
+end
