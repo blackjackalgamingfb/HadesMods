@@ -234,7 +234,7 @@ end
 ---------------------------------------------------------
 function Menu.CloseMenu(button)
     local screen = button.Screen or CurrentRun.CurrentScreen
-    
+    if not screen then return end
     DisableShopGamepadCursor()
     UnfreezePlayerUnit()
 
