@@ -19,6 +19,10 @@ function Menu.CreateMenu(id, definition)
     FreezePlayerUnit()
     EnableShopGamepadCursor()
 
+    -- Store screen reference for button callbacks
+    CurrentRun = CurrentRun or {}
+    CurrentRun.CurrentScreen = screen
+
     -- Background panel (same as Broker UI)
     screen.Components.Background = CreateScreenComponent({ Name = "ShopBackground", Group = "Combat_Menu" })
 
